@@ -33,9 +33,9 @@ source("scripts/buildsyntheticdata.R", local = TRUE)
 
 # App parameters --------------------------------------------------
 
-default_population_size <- 25L
-maximum_population_size <- 2000L
-maximum_gap <- 730L
+default_population_size <- 25
+maximum_population_size <- 100
+maximum_gap <- 730
 elevated_threshold <- 3.5
 
 trajectory_levels <- c(
@@ -53,10 +53,10 @@ trajectory_labels <- c(
 )
 
 trajectory_colors <- c(
-  "low-low" = "#00274C",
-  "low-high" = "#9A3324",
-  "high-low" = "#2F6544",
-  "high-high" = "#876400"
+  "low-low" = "#540d6e",
+  "low-high" = "#ee4266",
+  "high-low" = "#0ead69",
+  "high-high" = "#ffd23f"
 )
 
 test_result_levels <- c(
@@ -65,7 +65,7 @@ test_result_levels <- c(
 )
 
 test_result_colors <- setNames(
-  c("#00274C", "#9A3324"),
+  c("#540d6e", "#ee4266"),
   test_result_levels
 )
 
@@ -615,7 +615,7 @@ server <- function(input, output, session) {
       "The minimum gap for tests to be considered separate tests is ",
       gap,
       if (gap == 1) " day." else " days.",
-      " Tests within this window are considered re-tests, and are deduplicated, keeping venous tests over capillary tets, and keeping the highest reported value from either"
+      " Tests within this window are considered re-tests, and are deduplicated, keeping venous tests over capillary tests, and keeping the highest reported value from either."
     )
   })
 
