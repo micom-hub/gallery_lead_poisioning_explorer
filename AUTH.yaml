@@ -1,0 +1,2 @@
+# Demo config, only needs path
+lead_data_file: "data/synthetic_lead.csv"
