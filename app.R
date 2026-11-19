@@ -1,22 +1,11 @@
 # app.R
 #
-# In-memory synthetic childhood blood lead trajectory explorer.
-#
+# Running this script launches the trajectory explorer app!
+# 
 # Required:
 #   R/helpers.R
-#     - prepare_synthetic_tests()
-#     - first_nonmissing()
-#     - format_age_ymd()
-#     - find_multiple_tests()
-#
 #   scripts/buildsyntheticdata.R
-#     - build_synthetic_data(n_children)
-#       Returns a data frame without reading or writing files.
-#
 #   www/logo.png
-#
-# Shiny automatically sources R/helpers.R.
-# No configuration file, pipeline, or data directory is required.
 
 library(shiny)
 library(bslib)
@@ -26,12 +15,11 @@ library(htmltools)
 library(plotly)
 library(lubridate)
 
-# Disable development-mode messages and use normal runtime defaults.
 shiny::devmode(FALSE)
 
 source("scripts/buildsyntheticdata.R", local = TRUE)
 
-# App parameters --------------------------------------------------
+# App parameters - These can be modified to change the default app settings ----
 
 default_population_size <- 25
 maximum_population_size <- 100
@@ -72,7 +60,7 @@ test_result_colors <- setNames(
 trajectory_line_width <- 2
 test_point_size <- 8
 
-# User interface --------------------------------------------------
+# User interface - This builds the visual components of the app ------
 
 ui <- page_sidebar(
   title = tags$div(
@@ -112,6 +100,8 @@ ui <- page_sidebar(
 
   fillable = TRUE,
 
+  #This section is written in HTML/CSS, which allows for
+  # more control over specific visual aspects
   tags$head(
     tags$style(
       HTML(
@@ -279,6 +269,7 @@ ui <- page_sidebar(
     )
   ),
 
+  # This is the settings section, controlling sliders and buttons
   sidebar = sidebar(
     width = 340,
 
@@ -466,19 +457,17 @@ ui <- page_sidebar(
   )
 )
 
-# Server ----------------------------------------------------------
+# Server - These parts connect with the ui to "make stuff happen" ----
 
 server <- function(input, output, session) {
-  # Generate a separate initial population for each session --------
-
+  # Generate a synthetic population
   current_tests <- reactiveVal(
     prepare_synthetic_tests(
       build_synthetic_data(default_population_size)
     )
   )
 
-  # Replace the population in memory -------------------------------
-
+  # Regenerate population if you click the button
   observeEvent(input$generate_population, {
     n_children <- input$population_size
 
@@ -556,7 +545,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # Synchronize gap controls --------------------------------------
+  # Keep the gap slider and numeric input synced
 
   observeEvent(input$minimum_gap, {
     req(
@@ -619,19 +608,16 @@ server <- function(input, output, session) {
     )
   })
 
-  # Retain separate testing windows -------------------------------
-
   longitudinal_data <- reactive({
     req(!is.null(gap_value()))
-
+    # From R/helpers.R
     find_multiple_tests(
       df = current_tests(),
       minimum_gap = gap_value()
     )
   })
 
-  # One row per synthetic child -----------------------------------
-
+  #Manipulate synthetic data into wide format
   case_metadata <- reactive({
     dat <- longitudinal_data()
 
@@ -729,9 +715,8 @@ server <- function(input, output, session) {
       )
   })
 
-  # Filter choices follow the generated population ----------------
-
-  observeEvent(
+  
+observeEvent(
     current_tests(),
     {
       dat <- current_tests()
@@ -755,8 +740,7 @@ server <- function(input, output, session) {
     ignoreInit = FALSE
   )
 
-  # Apply child-level filters -------------------------------------
-
+  # Apply settings filters as requested
   filtered_metadata <- reactive({
     metadata <- case_metadata()
 
@@ -785,8 +769,7 @@ server <- function(input, output, session) {
       )
   })
 
-  # Summary counts ------------------------------------------------
-
+  # Summary count calculation
   summary_counts <- reactive({
     metadata <- filtered_metadata()
 
@@ -822,8 +805,7 @@ server <- function(input, output, session) {
     rownames = FALSE
   )
 
-  # Detailed summary ----------------------------------------------
-
+  # Expandable detailed summary component
   detailed_summary_visible <- reactiveVal(FALSE)
 
   observeEvent(input$toggle_detailed_summary, {
@@ -920,9 +902,8 @@ server <- function(input, output, session) {
     rownames = FALSE
   )
 
-  # Downloads are created only at the user's request ----------------
-
-  output$download_detailed_summary <- downloadHandler(
+  
+output$download_detailed_summary <- downloadHandler(
     filename = function() {
       paste0(
         "synthetic_lead_trajectory_summary_",
@@ -942,8 +923,7 @@ server <- function(input, output, session) {
     }
   )
 
-  # Interactive trajectory plot -----------------------------------
-
+  # Generate the interactive trajectory plot
   output$trajectory_plot <- renderPlotly({
     dat <- filtered_longitudinal() %>%
       filter(
@@ -970,8 +950,7 @@ server <- function(input, output, session) {
       "calendar_date"
     )
 
-    # X-axis configuration ----------------------------------------
-
+    # axis config by settings
     if (use_calendar_dates) {
       date_min <- min(dat$SPEC_DT_R)
       date_max <- max(dat$SPEC_DT_R)
@@ -1016,8 +995,6 @@ server <- function(input, output, session) {
       plot_title <- "Synthetic blood lead levels since first retained test"
     }
 
-    # Y-axis configuration ----------------------------------------
-
     y_max <- max(dat$PB_RESULT_new, elevated_threshold)
 
     y_axis_range <- c(
@@ -1025,8 +1002,7 @@ server <- function(input, output, session) {
       y_max + max(0.5, y_max * 0.08)
     )
 
-    # Hover text --------------------------------------------------
-
+    # hover over points to see details
     dat <- dat %>%
       mutate(
         trajectory_code = as.character(trajectory),
@@ -1113,8 +1089,7 @@ server <- function(input, output, session) {
 
     plot_object <- plot_ly()
 
-    # Fixed trajectory legend -------------------------------------
-
+    # fix the legend
     for (i in seq_along(trajectory_levels)) {
       code <- trajectory_levels[i]
 
@@ -1148,8 +1123,7 @@ server <- function(input, output, session) {
         )
     }
 
-    # One line trace per child -------------------------------------
-
+    # Generate lines for each child's trajectory
     child_groups <- split(dat, dat$.child_name)
 
     for (child_data in child_groups) {
@@ -1179,8 +1153,6 @@ server <- function(input, output, session) {
           hovertemplate = "%{text}<extra></extra>"
         )
     }
-
-    # Fixed test-result legend -------------------------------------
 
     for (i in seq_along(test_result_levels)) {
       result_level <- test_result_levels[i]
@@ -1215,8 +1187,6 @@ server <- function(input, output, session) {
           hoverinfo = "skip"
         )
     }
-
-    # Test-result points -------------------------------------------
 
     for (result_level in test_result_levels) {
       point_data <- dat %>%
@@ -1253,7 +1223,7 @@ server <- function(input, output, session) {
         )
     }
 
-    # Layout -------------------------------------------------------
+    # Determine plot layout
 
     plot_object %>%
       layout(
@@ -1382,6 +1352,5 @@ server <- function(input, output, session) {
   })
 }
 
-# Launch ----------------------------------------------------------
-
+# This function launches the app itself
 shinyApp(ui = ui, server = server)

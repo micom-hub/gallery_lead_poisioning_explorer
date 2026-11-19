@@ -3,6 +3,7 @@
 # Shared functions for the trajectory explorer.
 
 
+# Helper to operate on synthetic test data for formatting purposes
 prepare_synthetic_tests <- function(data) {
   data |>
     dplyr::mutate(
@@ -25,6 +26,7 @@ prepare_synthetic_tests <- function(data) {
     dplyr::arrange(Name, SPEC_DT_R)
 }
 
+# get the first nonmissing value
 first_nonmissing <- function(x) {
   if (is.factor(x)) {
     x <- as.character(x)
@@ -45,7 +47,7 @@ first_nonmissing <- function(x) {
   x[1]
 }
 
-
+# formatting dates
 format_age_ymd <- function(date_of_birth, test_date) {
   date_of_birth <- as.Date(date_of_birth)
   test_date <- as.Date(test_date)
@@ -75,7 +77,7 @@ format_age_ymd <- function(date_of_birth, test_date) {
   )
 }
 
-
+# find children with multiple tests from the long df
 find_multiple_tests <- function(df, minimum_gap = 30) {
   required_columns <- c(
     "Name",

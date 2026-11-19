@@ -1,7 +1,6 @@
 # scripts/buildsyntheticdata.R
 #
 # Generate random demonstration records without using real patient data.
-# Run from the project root.
 
 build_synthetic_data <- function(n_children = 300) {
   if (
@@ -101,8 +100,9 @@ build_synthetic_data <- function(n_children = 300) {
     'Wexford County'
   )
 
+  # Assign random demographic + test data to each synthetic record
   records <- lapply(seq_len(n_children), function(i) {
-    n_tests <- sample(1:6, size = 1)
+    n_tests <- sample(1:4, size = 1)
 
     first_date <- as.Date("2022-01-01") +
       sample.int(1096, size = 1) -
@@ -140,7 +140,7 @@ build_synthetic_data <- function(n_children = 300) {
       length.out = n_tests
     )
 
-    # Add variation to intermediate results, preserving the endpoints.
+    # Add make internal tests vary
     if (n_tests > 2L) {
       middle <- 2:(n_tests - 1L)
 
@@ -169,8 +169,7 @@ build_synthetic_data <- function(n_children = 300) {
       stringsAsFactors = FALSE
     )
 
-    # Occasionally add a nearby venous repeat to exercise the app's
-    # testing-window selection procedure.
+    # Add nearby venous tests
     if (runif(1) < 0.25) {
       repeat_test <- child[1, , drop = FALSE]
 
