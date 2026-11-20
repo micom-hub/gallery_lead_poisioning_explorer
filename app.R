@@ -269,7 +269,7 @@ ui <- page_sidebar(
     )
   ),
 
-  # This is the settings section, controlling sliders and buttons
+  # This is the settings section, controlling sliders and buttons
   sidebar = sidebar(
     width = 340,
 
@@ -460,7 +460,7 @@ ui <- page_sidebar(
 # Server - These parts connect with the ui to "make stuff happen" ----
 
 server <- function(input, output, session) {
-  # Generate a synthetic population
+  # Generate a synthetic population
   current_tests <- reactiveVal(
     prepare_synthetic_tests(
       build_synthetic_data(default_population_size)
@@ -1123,7 +1123,7 @@ output$download_detailed_summary <- downloadHandler(
         )
     }
 
-    # Generate lines for each child's trajectory
+    # Generate lines for each child's trajectory
     child_groups <- split(dat, dat$.child_name)
 
     for (child_data in child_groups) {
@@ -1352,5 +1352,5 @@ output$download_detailed_summary <- downloadHandler(
   })
 }
 
-# This function launches the app itself
+# This function launches the app itself
 shinyApp(ui = ui, server = server)
